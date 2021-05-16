@@ -1,0 +1,5 @@
+flask
+mysqlclient
+pytz
+sqlalchemy
+uwsgi

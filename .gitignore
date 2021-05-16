@@ -1,0 +1,6 @@
+/.idea/
+/src/evelyn_reminder/api/settings.cfg
+/src/evelyn_reminder/api/uwsgi.ini
+/src/evelyn_reminder/client/bot/discord/config.ini
+/src/evelyn_reminder/client/desktop/config.ini
+/venv/
