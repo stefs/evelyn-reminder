@@ -18,6 +18,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import webbrowser
 from argparse import ArgumentParser
 from collections.abc import Callable
 from configparser import ConfigParser
@@ -205,10 +206,13 @@ class EvelynDesktop(QStackedWidget):
         self.action_frameless = QAction('Frameless window')
         self.action_frameless.setCheckable(True)
         self.action_frameless.triggered.connect(self.set_frameless_window)
+        self.action_homepage = QAction('Open homepage')
+        self.action_homepage.triggered.connect(self.open_homepage)
         self.context_menu = QMenu()
         self.context_menu.addAction(self.action_report_done)
         self.context_menu.addAction(self.action_exit)
         self.context_menu.addAction(self.action_frameless)
+        self.context_menu.addAction(self.action_homepage)
         # threads
         self.thread_communication = QThread()
         self.thread_communication.start()
@@ -349,6 +353,10 @@ class EvelynDesktop(QStackedWidget):
         # workaround: window would move up otherwise
         if value:
             QTimer.singleShot(100, lambda: self.move(pos))
+
+    @Slot()
+    def open_homepage(self) -> None:
+        webbrowser.open('https://github.com/stefs/evelyn-reminder')
 
 
 class CommunicationWorker(QObject):

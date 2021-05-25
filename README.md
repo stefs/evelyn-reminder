@@ -267,7 +267,6 @@ Then execute the file directly in your file explorer or with this command:
 ### Desktop client
 
 * Right click to delete done reminder
-* Add GitHub link to context menu
 
 ## License
 
