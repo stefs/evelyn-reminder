@@ -45,10 +45,11 @@ multiple users within multiple servers.
 
 ![Screenshot of desktop client](readme_files/screenshot_desktop.png)
 
-This is a complementary desktop application to display the status of your reminders. It only shows one reminder at a
-time, which is automatically selected by the smallest key. It uses the background color which is assigned to the
-reminder. When no reminder is due, the window becomes transparent. In summary, the application behaves like a permanent
-notification on your screen. It is recommended to place it on a secondary monitor.
+This is a complementary desktop application to display the status of your reminders. Click anywhere inside the window to
+record a reminder as done. It only shows one reminder at a time, which is automatically selected by the smallest key. It
+uses the background color which is assigned to the reminder. When no reminder is due, the window becomes transparent. In
+summary, the application behaves like a permanent notification on your screen. It is recommended to place it on a
+secondary monitor.
 
 ## Structure
 
@@ -113,6 +114,9 @@ Context menu | Description
 Report done ... | Select a time in the past, when you forgot to confirm the reminder
 Exit | Close the application
 Frameless window | Check this to hide the window border of your operating system
+
+The window will remember its last position. To move it, uncheck "Frameless window" in the context menu. Afterwards you
+can hide the frame again.
 
 ## How to run
 ### API server
@@ -248,7 +252,7 @@ Then execute the file directly in your file explorer or with this command:
 
 ### Discord bot
 
-* Automatically delete, or update old pings
+* Automatically delete, or update old pings in Discord
 * Allow all settings of both the config and state file to be changed on the fly with bot commands on a per-user level,
   see [Usage Discord Bot Update](readme_files/usage_discord_bot_update.md)
 * Mark multiple reminders done at once ("12")
@@ -263,6 +267,7 @@ Then execute the file directly in your file explorer or with this command:
 ### Desktop client
 
 * Right click to delete done reminder
+* Add GitHub link to context menu
 
 ## License
 
