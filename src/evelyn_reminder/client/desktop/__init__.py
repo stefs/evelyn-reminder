@@ -16,108 +16,96 @@
 from __future__ import annotations
 
 import logging
-import os
 import sys
 import webbrowser
-from argparse import ArgumentParser
 from collections.abc import Callable
-from configparser import ConfigParser
 from contextlib import contextmanager, AbstractContextManager
-from typing import Optional, Any, Type
+from typing import Optional
 
 from PySide6.QtCore import Slot, QObject, Signal, QThread, QTimer, QSettings, QSize, QPoint, QDateTime
 from PySide6.QtGui import QCloseEvent, Qt, QAction, QContextMenuEvent, QMouseEvent
 from PySide6.QtWidgets import (
-    QApplication, QLabel, QMessageBox, QMenu, QStackedWidget, QWidget, QSizePolicy, QGridLayout, QDialog, QVBoxLayout,
-    QDateTimeEdit, QDialogButtonBox)
+    QApplication, QLabel, QMenu, QStackedWidget, QWidget, QSizePolicy, QGridLayout, QDialog, QVBoxLayout,
+    QDateTimeEdit, QDialogButtonBox, QLineEdit, QCheckBox)
 
 from evelyn_reminder.client import EvelynClient
 
 
 def main() -> None:
+    # noinspection SpellCheckingInspection
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.DEBUG)
-    # get config
-    parser = ArgumentParser()
-    parser.add_argument('--config', help='configuration file', default='config.ini')
-    args = parser.parse_args()
     # run application
     app = QApplication([])
-    widget = EvelynDesktop(args.config)
+    widget = EvelynDesktop()
     widget.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
-class Config(object):
+class Settings(QSettings):
+    DEFAULTS = {
+        'netloc': 'example.com',
+        'base_path': '/evelyn',
+        'api_key': '0000',
+        'guild': '000000000000000000',
+        'member': '000000000000000000',
+        'window_stays_on_top': True}
+
+    def __init__(self) -> None:
+        super().__init__('Evelyn Reminder', 'Evelyn Desktop')
+        self.beginGroup('user')
+        for key in self.allKeys():
+            if key not in self.DEFAULTS:
+                self.remove(key)
+        for key, default in self.DEFAULTS.items():
+            if not self.contains(key):
+                self.setValue(key, default)
+        self.endGroup()
+
+
+class SettingsDialog(QDialog):
+    KEYS_BOOL = ['window_stays_on_top']
+
     def __init__(
             self,
-            filename: str
+            parent: QWidget,
+            settings: Settings
     ) -> None:
-        # read options
-        self._filename = os.path.abspath(filename)
-        assert os.path.isfile(self._filename), f'File not found: {self._filename}'
-        self._parser = ConfigParser()
-        self._parser.read(self._filename)
-        # set attributes
-        self.netloc = self._parser.get('server', 'netloc')
-        self.base_path = self._parser.get('server', 'base_path')
-        self.api_key = self._parser.get('server', 'api_key')
-        self.guild = self._parser.getint('login', 'guild')
-        self.member = self._parser.getint('login', 'member')
-        self.window_stays_on_top = self._parser.getboolean('general', 'window_stays_on_top')
+        super().__init__(parent)
+        self.settings = settings
+        self.setWindowTitle('Settings')
+        self.widgets = {}
+        self.setLayout(layout := QGridLayout())
+        self.settings.beginGroup('user')
+        for index, key in enumerate(self.settings.DEFAULTS):
+            if key in self.KEYS_BOOL:
+                # noinspection PyTypeChecker
+                value: bool = self.settings.value(key, type=bool)
+                widget = QCheckBox()
+                widget.setChecked(value)
+            else:
+                # noinspection PyTypeChecker
+                value: str = self.settings.value(key, type=str)
+                widget = QLineEdit()
+                widget.setText(value)
+            self.widgets[key] = widget
+            layout.addWidget(QLabel(key), index, 0)
+            layout.addWidget(widget, index, 1)
+        self.settings.endGroup()
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Save ^ QDialogButtonBox.Cancel, self)
+        self.buttons.button(QDialogButtonBox.Save).clicked.connect(self.accept)
+        self.buttons.button(QDialogButtonBox.Cancel).clicked.connect(self.reject)
+        layout.addWidget(self.buttons, layout.rowCount(), 0, 1, 2)
 
-
-class Settings(object):
-    def __init__(self) -> None:
-        self._settings = QSettings('Evelyn Reminder', 'Evelyn Desktop')
-
-    @staticmethod
-    def _key(
-            section: str,
-            option: str
-    ) -> str:
-        return f'{section}/{option}'
-
-    def set(
-            self,
-            section: str,
-            option: str,
-            value: Any
-    ) -> None:
-        key = self._key(section, option)
-        self._settings.setValue(key, value)
-
-    def get(
-            self,
-            section: str,
-            option: str,
-            default: Any = None,
-            type_: Optional[Type] = None
-    ) -> Any:
-        # make key for QSettings
-        key = self._key(section, option)
-        # check not present
-        if not self._settings.contains(key):
-            return default
-        # get value
-        value = self._settings.value(key)
-        # parse special values
-        if type_ is bool:
-            return self._parse_bool(value)
-        # check type
-        if not isinstance(value, type_):
-            return default
-        # done
-        return value
-
-    @staticmethod
-    def _parse_bool(
-            value: str
-    ) -> Optional[bool]:
-        if value == 'true':
-            return True
-        if value == 'false':
-            return False
-        return None
+    def accept(self) -> None:
+        self.settings.beginGroup('user')
+        for key, widget in self.widgets.items():
+            if key in self.KEYS_BOOL:
+                value = widget.isChecked()
+            else:
+                value = widget.text()
+            self.settings.setValue(key, value)
+        self.settings.endGroup()
+        super().accept()
 
 
 class ClickableLabel(QLabel):
@@ -166,18 +154,8 @@ class EvelynDesktop(QStackedWidget):
     signal_get_ping = Signal()
     signal_post_history = Signal(int, QDateTime)
 
-    def __init__(
-            self,
-            config_file: str
-    ) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        # load config
-        try:
-            self.config = Config(config_file)
-        except Exception as e:
-            QMessageBox.critical(self, 'Config error', str(e))
-            QTimer.singleShot(0, self.close)
-            return
         # load settings
         self.settings = Settings()
         # state
@@ -199,30 +177,34 @@ class EvelynDesktop(QStackedWidget):
         self.label_alert.setStyleSheet(f'background: #dddddd;')
         self.addWidget(self.label_alert)
         # context menu
-        self.action_report_done = QAction('Report done ...')
-        self.action_report_done.triggered.connect(self.report_done)
-        self.action_exit = QAction('Exit')
-        self.action_exit.triggered.connect(self.close)
         self.action_frameless = QAction('Frameless window')
         self.action_frameless.setCheckable(True)
         self.action_frameless.triggered.connect(self.set_frameless_window)
+        self.action_report_done = QAction('Report done ...')
+        self.action_report_done.triggered.connect(self.report_done)
+        self.action_settings = QAction('Settings ...')
+        self.action_settings.triggered.connect(self.change_settings)
         self.action_homepage = QAction('Open homepage')
         self.action_homepage.triggered.connect(self.open_homepage)
+        self.action_exit = QAction('Exit')
+        self.action_exit.triggered.connect(self.close)
         self.context_menu = QMenu()
-        self.context_menu.addAction(self.action_report_done)
-        self.context_menu.addAction(self.action_exit)
         self.context_menu.addAction(self.action_frameless)
+        self.context_menu.addAction(self.action_report_done)
+        self.context_menu.addAction(self.action_settings)
         self.context_menu.addAction(self.action_homepage)
+        self.context_menu.addAction(self.action_exit)
         # threads
         self.thread_communication = QThread()
         self.thread_communication.start()
         # workers
+        # noinspection PyTypeChecker
         self.worker_communication = CommunicationWorker(
-            netloc=self.config.netloc,
-            base_path=self.config.base_path,
-            api_key=self.config.api_key,
-            guild=self.config.guild,
-            member=self.config.member)
+            netloc=self.settings.value('user/netloc', type=str),
+            base_path=self.settings.value('user/base_path', type=str),
+            api_key=self.settings.value('user/api_key', type=str),
+            guild=int(self.settings.value('user/guild', type=str)),
+            member=int(self.settings.value('user/member', type=str)))
         self.worker_communication.moveToThread(self.thread_communication)
         # signals
         self.worker_communication.signal_get_ping_done.connect(self.get_ping_done)
@@ -241,16 +223,21 @@ class EvelynDesktop(QStackedWidget):
         self.timer_label.setSingleShot(True)
         self.timer_label.setTimerType(Qt.CoarseTimer)
         # window attributes
-        size = self.settings.get('window', 'size', type_=QSize)
-        if size is not None:
-            self.resize(size)
-        pos = self.settings.get('window', 'pos', type_=QPoint)
-        if pos is not None:
-            self.move(pos)
-        frameless = self.settings.get('window', 'frameless', type_=bool)
-        if frameless is not None and frameless:
+        # noinspection PyTypeChecker
+        window_size: Optional[QSize] = self.settings.value('state/window_size')
+        if window_size is not None:
+            self.resize(window_size)
+        # noinspection PyTypeChecker
+        window_pos: Optional[QPoint] = self.settings.value('state/window_pos')
+        if window_pos is not None:
+            self.move(window_pos)
+        # noinspection PyTypeChecker
+        window_frameless: bool = self.settings.value('state/window_frameless', type=bool)
+        if window_frameless:
             QTimer.singleShot(100, self.action_frameless.trigger)
-        self.setWindowFlag(Qt.WindowStaysOnTopHint, self.config.window_stays_on_top)
+        # noinspection PyTypeChecker
+        window_stays_on_top: bool = self.settings.value('user/window_stays_on_top', type=bool)
+        self.setWindowFlag(Qt.WindowStaysOnTopHint, window_stays_on_top)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowTitle('Evelyn Reminder')
 
@@ -260,9 +247,9 @@ class EvelynDesktop(QStackedWidget):
     ) -> None:
         # save settings
         with suppress_and_log_exception():
-            self.settings.set('window', 'size', self.size())
-            self.settings.set('window', 'pos', self.pos())
-            self.settings.set('window', 'frameless', bool(self.windowFlags() & Qt.FramelessWindowHint))
+            self.settings.setValue('state/window_size', self.size())
+            self.settings.setValue('state/window_pos', self.pos())
+            self.settings.setValue('state/window_frameless', bool(self.windowFlags() & Qt.FramelessWindowHint))
         # stop communication thread
         with suppress_and_log_exception():
             self.thread_communication.quit()
@@ -274,7 +261,7 @@ class EvelynDesktop(QStackedWidget):
             self,
             event: QContextMenuEvent
     ) -> None:
-        self.context_menu.exec_(event.globalPos())
+        self.context_menu.exec(event.globalPos())
 
     @Slot()
     def get_ping(self) -> None:
@@ -357,6 +344,10 @@ class EvelynDesktop(QStackedWidget):
     @Slot()
     def open_homepage(self) -> None:
         webbrowser.open('https://github.com/stefs/evelyn-reminder')
+
+    @Slot()
+    def change_settings(self) -> None:
+        SettingsDialog(parent=self, settings=self.settings).exec()
 
 
 class CommunicationWorker(QObject):
