@@ -68,6 +68,7 @@ class Reminder(Base):
     last_ping_utc = Column(DateTime, nullable=False, default=datetime.datetime.min)
     mute_until_utc = Column(DateTime, nullable=False, default=datetime.datetime.min)
     alternating_flag = Column(Boolean, nullable=False, default=False)
+    active = Column(Boolean, nullable=False, default=True)
 
     histories = sqlalchemy.orm.relationship('History', back_populates='reminder')
 
@@ -533,7 +534,7 @@ class Mixin(object):
             member: Optional[int],
             key: Optional[int]
     ) -> Iterator[Reminder]:
-        query = session.query(Reminder)
+        query = session.query(Reminder).filter_by(active=True)
         if guild is not None:
             query = query.filter_by(guild=guild)
         if member is not None:
