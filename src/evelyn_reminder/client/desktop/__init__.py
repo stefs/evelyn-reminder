@@ -287,6 +287,7 @@ class EvelynDesktop(QStackedWidget):
             self.state_key = key
             self.label_ping.setWordWrap(False)
         self.label_ping.setText(text)
+        self.label_ping.setStyleSheet(f'background : #00000000; ')
         self.widget_ping.setStyleSheet(f'background : {color}; ')
 
     @Slot()
@@ -399,6 +400,8 @@ class CommunicationWorker(QObject):
                             f'<b>Gaps:</b> {gaps}<br>'
                             f'<b>Schedule:</b> {schedule}')
                     color = ping['reminder']['color_hex']
+            if not flag_due:
+                color = '#77444444'
         except Exception as e:
             key = -1
             text = str(e)
