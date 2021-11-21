@@ -26,7 +26,8 @@ WizardStyle=modern
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "autostart"; Description: "{cm:AutoStartProgram,Evelyn Reminder Desktop Client}"; GroupDescription: "{cm:AutoStartProgramGroupDescription}"
 
 [Components]
 Name: "main"; Description: "Main program"; Types: full custom; Flags: fixed
@@ -41,7 +42,8 @@ Source: "src\evelyn_reminder\client\desktop\requirements.txt"; DestDir: "{app}";
 
 [Icons]
 Name: "{autoprograms}\Evelyn Reminder Desktop Client"; Filename: "{app}\venv\Scripts\pythonw.exe"; Parameters: "evelyn_desktop.pyzw"; WorkingDir: "{app}"
-Name: "{autodesktop}\Evelyn Reminder Desktop Client"; Filename: "{app}\venv\Scripts\pythonw.exe"; Parameters: "evelyn_desktop.pyzw"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{userdesktop}\Evelyn Reminder Desktop Client"; Filename: "{app}\venv\Scripts\pythonw.exe"; Parameters: "evelyn_desktop.pyzw"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{userstartup}\Evelyn Reminder Desktop Client"; Filename: "{app}\venv\Scripts\pythonw.exe"; Parameters: "evelyn_desktop.pyzw"; WorkingDir: "{app}"; Tasks: autostart
 
 [Run]
 Filename: "py"; Description: "Python virtual environment"; Parameters: "-m venv venv"; WorkingDir: "{app}"; StatusMsg: "Creating the Python virtual environment ..."; Components: python\venv; Flags: waituntilterminated skipifsilent
