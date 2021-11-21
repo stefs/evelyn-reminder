@@ -48,7 +48,8 @@ class Settings(QSettings):
         'api_key': '0000',
         'guild': '000000000000000000',
         'member': '000000000000000000',
-        'window_stays_on_top': True}
+        'window_stays_on_top': True,
+        'transparent_when_idle': True}
 
     def __init__(self) -> None:
         super().__init__('Evelyn Reminder', 'Evelyn Desktop')
@@ -63,7 +64,7 @@ class Settings(QSettings):
 
 
 class SettingsDialog(QDialog):
-    KEYS_BOOL = ['window_stays_on_top']
+    KEYS_BOOL = ['window_stays_on_top', 'transparent_when_idle']
 
     def __init__(
             self,
@@ -91,6 +92,9 @@ class SettingsDialog(QDialog):
             layout.addWidget(QLabel(key), index, 0)
             layout.addWidget(widget, index, 1)
         self.settings.endGroup()
+        label = QLabel('Please restart the application\nto apply new settings!')
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label, layout.rowCount(), 0, 1, 2)
         self.buttons = QDialogButtonBox(QDialogButtonBox.Save ^ QDialogButtonBox.Cancel, self)
         self.buttons.button(QDialogButtonBox.Save).clicked.connect(self.accept)
         self.buttons.button(QDialogButtonBox.Cancel).clicked.connect(self.reject)
@@ -151,7 +155,7 @@ class EvelynDesktop(QStackedWidget):
     INTERVAL_SECS = 30
     ALERT_SECS = 5
 
-    signal_get_ping = Signal()
+    signal_get_ping = Signal(bool)
     signal_post_history = Signal(int, QDateTime)
 
     def __init__(self) -> None:
@@ -266,7 +270,7 @@ class EvelynDesktop(QStackedWidget):
     @Slot()
     def get_ping(self) -> None:
         logging.info('Get ping ...')
-        self.signal_get_ping.emit()
+        self.signal_get_ping.emit(self.settings.value('user/filter_due', type=bool))
 
     @Slot(int, str, str)
     def get_ping_done(
@@ -367,16 +371,23 @@ class CommunicationWorker(QObject):
         self.guild = guild
         self.member = member
 
-    @Slot()
-    def get_ping(self) -> None:
+    @Slot(bool)
+    def get_ping(
+            self,
+            filter_due: bool
+    ) -> None:
         try:
             key = -1
+            flag_due = False
             text = ''
             color = ''
-            for ping in self.client.get_ping(guild=self.guild, member=self.member, filter_ping_due=False):
+            for ping in self.client.get_ping(guild=self.guild, member=self.member,
+                                             filter_ping_due=False, filter_due=filter_due):
                 key_ = ping['reminder']['key']
-                if key == -1 or key_ < key:
+                flag_due_ = ping['flag_due']
+                if key == -1 or (flag_due and flag_due_ and key_ < key) or (not flag_due and key_ < key):
                     key = key_
+                    flag_due = flag_due_
                     message = ping['message']
                     when = ping['when']
                     last = ping['last']
