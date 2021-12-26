@@ -26,7 +26,7 @@ from PySide6.QtCore import Slot, QObject, Signal, QThread, QTimer, QSettings, QS
 from PySide6.QtGui import QCloseEvent, Qt, QAction, QContextMenuEvent, QMouseEvent
 from PySide6.QtWidgets import (
     QApplication, QLabel, QMenu, QStackedWidget, QWidget, QSizePolicy, QGridLayout, QDialog, QVBoxLayout,
-    QDateTimeEdit, QDialogButtonBox, QLineEdit, QCheckBox)
+    QDateTimeEdit, QDialogButtonBox, QLineEdit, QCheckBox, QGraphicsDropShadowEffect)
 
 from evelyn_reminder.client import EvelynClient
 
@@ -174,6 +174,10 @@ class EvelynDesktop(QStackedWidget):
         self.widget_ping = QWidget()
         self.widget_ping.setLayout(layout_ping)
         self.addWidget(self.widget_ping)
+        self.shadow_effect = QGraphicsDropShadowEffect()
+        self.shadow_effect.setColor('#ffffff')
+        self.shadow_effect.setOffset(0, 0)
+        self.shadow_effect.setBlurRadius(20)
         # alert widget
         self.label_alert = QLabel()
         self.label_alert.setWordWrap(True)
@@ -289,6 +293,7 @@ class EvelynDesktop(QStackedWidget):
         self.label_ping.setText(text)
         self.label_ping.setStyleSheet(f'background : #00000000; ')
         self.widget_ping.setStyleSheet(f'background : {color}; ')
+        self.widget_ping.setGraphicsEffect(None if color else self.shadow_effect)
 
     @Slot()
     def post_history(
@@ -399,9 +404,8 @@ class CommunicationWorker(QObject):
                             f'<b>Last:</b> {last}<br>'
                             f'<b>Gaps:</b> {gaps}<br>'
                             f'<b>Schedule:</b> {schedule}')
-                    color = ping['reminder']['color_hex']
-            if not flag_due:
-                color = '#77444444'
+                    if flag_due:
+                        color = ping['reminder']['color_hex']
         except Exception as e:
             key = -1
             text = str(e)
