@@ -868,12 +868,9 @@ def parse_bool_arg(
 
 
 def setup_database() -> None:
-    host = flask.current_app.config['DB_HOST']
-    name = flask.current_app.config['DB_NAME']
-    username = flask.current_app.config['DB_USERNAME']
-    password = flask.current_app.config['DB_PASSWORD']
+    filename = flask.current_app.config['DB_FILE']
     create_all = False
-    uri1 = f'mysql+mysqldb://{username}:{password}@{host}/{name}'
+    uri1 = f'sqlite://{filename}'
     engine = sqlalchemy.create_engine(uri1, isolation_level='READ COMMITTED')
     Session.configure(bind=engine)
     if create_all:
