@@ -166,7 +166,6 @@ class EvelynDesktop(QStackedWidget):
         self.state_key: Optional[int] = None
         # label widget
         self.label_ping = ClickableLabel('Loading ...', self.post_history)
-        self.label_ping.setTextFormat(Qt.RichText)
         self.label_ping.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         layout_ping = QGridLayout()
         layout_ping.setContentsMargins(0, 0, 0, 0)
@@ -287,9 +286,11 @@ class EvelynDesktop(QStackedWidget):
         if key == -1:
             self.state_key = None
             self.label_ping.setWordWrap(True)
+            self.label_ping.setTextFormat(Qt.PlainText)
         else:
             self.state_key = key
             self.label_ping.setWordWrap(False)
+            self.label_ping.setTextFormat(Qt.RichText)
         self.label_ping.setText(text)
         self.label_ping.setStyleSheet(f'background : #00000000; ')
         self.widget_ping.setStyleSheet(f'background : {color}; ')
