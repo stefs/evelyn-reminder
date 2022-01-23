@@ -252,6 +252,7 @@ class EvelynDesktop(QStackedWidget):
         with suppress_and_log_exception():
             self.settings.setValue('state/window_size', self.size())
             self.settings.setValue('state/window_pos', self.pos())
+            # noinspection PyUnresolvedReferences
             self.settings.setValue('state/window_frameless', bool(self.windowFlags() & Qt.FramelessWindowHint))
         # stop communication thread
         with suppress_and_log_exception():
