@@ -271,7 +271,7 @@ Then execute the file directly in your file explorer or with this command:
 ## License
 
 Evelyn Reminder  
-Copyright © 2021 Stefan Schindler
+Copyright © 2022 Stefan Schindler
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 License in version 3 as published by the Free Software Foundation.

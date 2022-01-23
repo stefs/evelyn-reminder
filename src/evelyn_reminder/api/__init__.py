@@ -1,5 +1,5 @@
 #  Evelyn Reminder
-#  Copyright © 2021  Stefan Schindler
+#  Copyright © 2022  Stefan Schindler
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License in version 3
