@@ -155,6 +155,20 @@ Finally, run the server using uWSGI.
     $ cd src
     $ ../venv/bin/uwsgi evelyn_reminder/api/uwsgi.ini
 
+To use a systemd user unit
+
+    [Unit]
+    Description=Evelyn API
+    
+    [Service]
+    WorkingDirectory=/home/user/evelyn-reminder/src
+    ExecStart=/home/user/evelyn-reminder/venv_api/bin/uwsgi /home/user/evelyn-reminder/src/evelyn_reminder/api/uwsgi.ini
+    Restart=always
+    KillSignal=SIGINT
+    
+    [Install]
+    WantedBy=default.target
+
 Set up your web server to make the application accessible.
 
     ProxyPass /evelyn uwsgi://localhost:1024/
@@ -215,6 +229,19 @@ Execute the module:
 
     $ cd src
     $ python -m evelyn_reminder.client.bot.discord evelyn_reminder/client/bot/discord/config.ini
+
+To use a systemd user unit:
+
+    [Unit]
+    Description=Evelyn Discord
+    
+    [Service]
+    WorkingDirectory=/home/user/evelyn-reminder/src
+    ExecStart=/home/user/evelyn-reminder/venv_discord/bin/python -m evelyn_reminder.client.bot.discord evelyn_reminder/client/bot/discord/config.ini
+    Restart=always
+    
+    [Install]
+    WantedBy=default.target
 
 ### Desktop client
 
