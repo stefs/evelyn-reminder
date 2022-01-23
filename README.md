@@ -146,14 +146,18 @@ To run the server in a production deployment, create the uWSGI file `uwsgi.ini`.
     pidfile = evelyn_api.pid
     master = true
     processes = 1
-    http-socket = :1024
+    socket = :1024
     chmod-socket = 660
     vacuum = true
 
-Finally, run the server using uWSGI and set up your web server to make the application accessible.
+Finally, run the server using uWSGI.
 
     $ cd src
-    $ uwsgi evelyn_reminder/api/uwsgi.ini
+    $ ../venv/bin/uwsgi evelyn_reminder/api/uwsgi.ini
+
+Set up your web server to make the application accessible.
+
+    ProxyPass /evelyn uwsgi://localhost:1024/
 
 #### API documentation
 
