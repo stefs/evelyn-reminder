@@ -870,8 +870,8 @@ def parse_bool_arg(
 def setup_database() -> None:
     filename = flask.current_app.config['DB_FILE']
     create_all = False
-    uri1 = f'sqlite://{filename}'
-    engine = sqlalchemy.create_engine(uri1, isolation_level='READ COMMITTED')
+    uri1 = f'sqlite:///{filename}'
+    engine = sqlalchemy.create_engine(uri1)
     Session.configure(bind=engine)
     if create_all:
         Base.metadata.create_all(engine)
