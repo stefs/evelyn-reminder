@@ -388,7 +388,17 @@ class CommunicationWorker(QObject):
                                              filter_ping_due=False, filter_due=filter_due):
                 key_ = ping['reminder']['key']
                 flag_due_ = ping['flag_due']
-                if key == -1 or (flag_due and flag_due_ and key_ < key) or (not flag_due and key_ < key):
+                pick = False
+                if key == -1:
+                    pick = True
+                elif flag_due:
+                    if flag_due_ and key_ < key:
+                        pick = True
+                elif flag_due_:
+                    pick = True
+                elif key_ < key:
+                    pick = True
+                if pick:
                     key = key_
                     flag_due = flag_due_
                     message = ping['message']
